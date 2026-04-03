@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AR Urge Control</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- MindAR + Three.js -->
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-three.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: black;
+    }
+
+    #message {
+      position: fixed;
+      top: 20px;
+      width: 100%;
+      text-align: center;
+      color: white;
+      font-size: 18px;
+      z-index: 2;
+    }
+
+    #ui {
+      position: fixed;
+      bottom: 20px;
+      width: 100%;
+      text-align: center;
+      z-index: 2;
+    }
+
+    button {
+      padding: 14px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 10px;
+      background: #00c853;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="message">Observe the urge. Do not react.</div>
+
+  <div id="ui">
+    <button onclick="releaseUrge()">Release Urge</button>
+  </div>
+
+  <script>
+    let sphere;
+    let growing = true;
+    let scale = 1;
+
+    const start = async () => {
+      const mindarThree = new window.MINDAR.IMAGE.MindARThree({
+        container: document.body,
+      });
+
+      const { renderer, scene, camera } = mindarThree;
+
+      // Light
+      const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
+      scene.add(light);
+
+      // Urge object (red sphere)
+      const geometry = new THREE.SphereGeometry(0.2);
+      const material = new THREE.MeshStandardMaterial({
+        color: 0xff0000,
+        emissive: 0xaa0000,
+      });
+
+      sphere = new THREE.Mesh(geometry, material);
+      sphere.position.set(0, 0, -1);
+      scene.add(sphere);
+
+      await mindarThree.start();
+
+      renderer.setAnimationLoop(() => {
+        if (growing && sphere) {
+          scale += 0.01;
+          sphere.scale.set(scale, scale, scale);
+        }
+
+        renderer.render(scene, camera);
+      });
+    };
+
+    function releaseUrge() {
+      growing = false;
+
+      document.getElementById("message").innerText =
+        "You are in control. The urge will pass.";
+
+      // Smooth fade out
+      const fade = setInterval(() => {
+        if (sphere && sphere.scale.x > 0.05) {
+          sphere.scale.multiplyScalar(0.9);
+        } else {
+          clearInterval(fade);
+        }
+      }, 50);
+    }
+
+    start();
+  </script>
+
+</body>
+</html>
